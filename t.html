@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Timer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@900&display=swap');
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(to top left, #1e90ff, #4b0082);
+      font-family: 'Almarai', sans-serif;
+      color: #00ffff;
+      user-select: none;
+    }
+    .container {
+      background: rgba(0,0,0,0.25);
+      padding: 30px 40px;
+      border-radius: 25px;
+      box-shadow: 0 0 20px 6px #00ffffcc, 0 0 40px 14px #00ffffaa;
+      text-align: center;
+      width: 700px;
+      max-width: 90vw;
+      height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .timer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 7.5rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-shadow: 0 0 15px #00ffffcc, 0 0 40px #00ffffaa;
+      margin-bottom: 25px;
+    }
+    .time-box {
+      padding: 0 10px;
+    }
+    .colon {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      margin-right: 20px;
+      margin-top: 10px;
+    }
+    .dot {
+      width: 30px;
+      height: 30px;
+      background-color: #00ffff;
+      border-radius: 8px;
+      margin: 6px;
+      box-shadow: 0 0 10px #00ffffcc;
+    }
+    .controls {
+      display: flex;
+      justify-content:center;
+      gap: 15px;
+    }
+    button {
+      flex: 1;
+      background: black;
+      color: #00ffff;
+      border: 2px solid #00ffff;
+      border-radius: 15px;
+      padding: 12px 0;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    button:hover:not(:disabled) {
+      background: #00ffff;
+      color: black;
+      box-shadow: 0 0 20px #00ffff;
+      transform: scale(1.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="timer">
+      <div class="time-box" id="minutes">00</div>
+      <div class="colon">
+        <div class="dot" id="pauseDot"></div>
+        <div class="dot" id="resetDot"></div>
+      </div>
+      <div class="time-box" id="seconds">02</div>
+    </div>
+    <div class="controls">
+      <button id="startBtn">Start</button>
+      <button id="muteBtn">Sound</button>
+    </div>
+  </div>
+
+<script>
+  const minutesEl = document.getElementById('minutes');
+  const secondsEl = document.getElementById('seconds');
+  const startBtn = document.getElementById('startBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const pauseDot = document.getElementById('pauseDot');
+  const resetDot = document.getElementById('resetDot');
+
+  let isRunning = false;
+  let isMuted = false;
+  let interval = null;
+  let remaining = 2;
+  let isRedPhase = false;
+  let isPaused = false;
+
+  const alarm = new Audio('digital-alarm-02-151919.mp3');
+  alarm.loop = true;
+  alarm.volume = 1;
+
+  function updateDisplay(seconds, red = false) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    minutesEl.textContent = mins.toString().padStart(2, '0');
+    secondsEl.textContent = secs.toString().padStart(2, '0');
+
+    minutesEl.style.color = "#00ffff";
+    secondsEl.style.color = "#00ffff";
+    minutesEl.style.textShadow = "0 0 15px #00ffffcc, 0 0 40px #00ffffaa";
+    secondsEl.style.textShadow = "0 0 15px #00ffffcc, 0 0 40px #00ffffaa";
+  }
+
+  function runCycle(duration, redPhase) {
+    isRedPhase = redPhase;
+    updateDisplay(remaining, isRedPhase);
+
+    interval = setInterval(() => {
+      if (!isPaused) {
+        remaining--;
+        updateDisplay(remaining, isRedPhase);
+
+        if (remaining <= 0) {
+          clearInterval(interval);
+          if (isRedPhase) {
+            alarm.pause();
+            alarm.currentTime = 0;
+            remaining = 2;
+            runCycle(remaining, false);
+          } else {
+            if (!isMuted) alarm.play();
+            remaining = 2;
+            runCycle(remaining, true);
+          }
+        }
+      }
+    }, 1000);
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (!isRunning) {
+      isRunning = true;
+      isPaused = false;
+      runCycle(remaining, false);
+    }
+  });
+
+  muteBtn.addEventListener('click', () => {
+    isMuted = !isMuted;
+    muteBtn.textContent = isMuted ? 'Muted' : 'Sound';
+    if (isMuted) {
+      alarm.pause();
+    } else {
+      if (isRedPhase) alarm.play();
+    }
+  });
+
+  pauseDot.addEventListener('click', () => {
+    if (isRunning) {
+      isPaused = !isPaused;
+    }
+  });
+
+  resetDot.addEventListener('click', () => {
+    clearInterval(interval);
+    isRunning = false;
+    isPaused = false;
+    isRedPhase = false;
+    alarm.pause();
+    alarm.currentTime = 0;
+    remaining = 2;
+    updateDisplay(remaining);
+  });
+
+  updateDisplay(remaining);
+</script>
+</body>
+</html>
